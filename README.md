@@ -53,3 +53,7 @@ Para evitar o desgaste do motor por acionamentos repetitivos em variações curt
 
 ---
 🎨 *Projeto desenvolvido e simulado utilizando a plataforma Tinkercad.*
+
+<p align="center">
+  <img src="Circuito/ZeroGrau.png" alt="Circuito do Projeto" width="600">
+</p>
