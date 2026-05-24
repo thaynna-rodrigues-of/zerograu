@@ -1,4 +1,4 @@
-# 🧊 Sensor de Temperatura para Freezer
+# 🧊 Zero Grau - Sensor de Temperatura para Freezer
 
 Este projeto consiste em um sistema automatizado de controle e monitoramento de temperatura para freezers utilizando a plataforma Arduino. O sistema monitora a temperatura em tempo real, gerencia o acionamento do compressor baseado em uma meta programável (com histerese) e salva as configurações na memória não-volátil (EEPROM) para evitar perda de dados em quedas de energia.
 
