@@ -16,7 +16,7 @@ int compressor = 13;   // Pino que simula o motor do freezer (controla o LED int
 int temp_sensor = A0;  // Entrada analógica onde o sensor de temperatura está conectado
 
 // --- Variáveis de Controle de Temperatura ---
-int8_t setpoint = -5;  // Temperatura desejada no freezer (armazenado em 8 bits para suportar valores negativos)
+int8_t setpoint = -21;  // Temperatura desejada no freezer (armazenado em 8 bits para suportar valores negativos)
 int histerese = 3;     // Margem de tolerância para evitar que o motor ligue e desligue sem parar
 float temp = 0;        // Variável que guarda a temperatura atual medida pelo sensor
 
@@ -46,11 +46,21 @@ void setup(){
   setpoint = (int8_t)EEPROM.read(0); // Lê o setpoint no endereço 0
   histerese = EEPROM.read(1);        // Lê a histerese no endereço 1
   
+  if (setpoint < -30 || setpoint > -10) {
+  setpoint = -21;
+  EEPROM.update(0, setpoint);
+}
+
+  if (histerese < 1 || histerese > 5) {
+  histerese = 3;
+  EEPROM.update(1, histerese);
+}
+  
   // Filtro de segurança: Se a memória estiver vazia ou resetada (valores padrão 255 ou -1), define os valores iniciais estáveis
   if(setpoint == -1 || setpoint == 127 || setpoint == 255) setpoint = -5;
   if(histerese == -1 || histerese == 255) histerese = 3;
 }
-
+ 
 void loop(){
   // Realiza a leitura digital atual do estado de todos os botões
   int reading_up     = digitalRead(bup);
@@ -78,8 +88,9 @@ void loop(){
   if (!sistemaLigado) {
     lcd.setCursor(0, 0);
     lcd.print("    FREEZER    ");
+    
     lcd.setCursor(0, 1);
-    lcd.print("  STATUS: OFF   ");
+    lcd.print("  STATUS: OFF ");
     
     // Atualiza o histórico dos botões para o próximo ciclo do loop
     last_bup = reading_up;
@@ -88,6 +99,7 @@ void loop(){
     last_bdownh = reading_downh;
     
     delay(150);
+    
     return; // Interrompe a execução do loop aqui, ignorando a leitura do sensor e controle do motor
   }
 
@@ -121,33 +133,43 @@ void loop(){
   if (temp >= (setpoint + histerese)) {
     digitalWrite(compressor, HIGH); 
   } 
+  
   // Se a refrigeração atingir a temperatura exata da Meta, desliga o compressor para poupar energia
   else if (temp <= setpoint) {
     digitalWrite(compressor, LOW); 
   }
 
   // --- Atualização das Informações no Display LCD ---
+
   // Linha 1: Exibe a temperatura atual em tempo real
   lcd.setCursor(0, 0);
-  lcd.print("Temp:");
   lcd.print(temp, 1);   // Mostra a temperatura com apenas 1 casa decimal
   lcd.print((char)176); // Imprime o símbolo de grau (°)
-  lcd.print("C     ");  // Espaços em branco no fim limpam resquícios de caracteres antigos na tela
+  lcd.print("C");
 
-  // Linha 2: Exibe a temperatura alvo definida pelo usuário
+  // Canto Superior Direito: Exibe o estado atual do compressor
+  lcd.setCursor(10, 0);
+  
+  if(digitalRead(compressor) == HIGH){
+    lcd.print("[ON ]"); // Compressor ligado refrigerando
+  } 
+  
+  else {
+    lcd.print("[OFF]"); // Compressor desligado
+  }
+
+  // Linha 2: Exibe as temperaturas de acionamento e desligamento
   lcd.setCursor(0, 1);
-  lcd.print("Meta:");
+
+  lcd.print("MAX:");
+  lcd.print(setpoint + histerese);
+  lcd.print((char)176);
+  lcd.print(" ");
+
+  lcd.print("MIN:");
   lcd.print(setpoint);
   lcd.print((char)176);
-  lcd.print("C ");
-
-  // Canto Inferior Direito: Exibe o status atual de funcionamento do motor
-  lcd.setCursor(11, 1);
-  if (digitalRead(compressor) == HIGH) {
-    lcd.print("[REF]");  // Indica que o compressor está ligado refrigerando
-  } else {
-    lcd.print("[OK] ");  // Indica que a temperatura está controlada e o motor descansando
-  }
+  lcd.print(" ");
 
   delay(150); // Taxa de atualização do ciclo de monitoramento
 }
